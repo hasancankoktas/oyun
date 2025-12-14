@@ -1,0 +1,1986 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hasan vs Betül - 25 Hak</title>
+  <style>
+    html, body { margin:0; height:100%; background:#0b0f17; overflow:hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    #wrap { height:100%; display:flex; align-items:center; justify-content:center; }
+    canvas { background: radial-gradient(circle at 30% 20%, #1b2a44, #0b0f17 65%); border-radius:16px; box-shadow: 0 10px 40px rgba(0,0,0,.45); touch-action: manipulation; }
+    .hud {
+      position: fixed; left: 16px; top: 16px;
+      color: #e8eefc; background: rgba(0,0,0,.35);
+      padding: 10px 12px; border-radius: 12px; backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 14px; line-height: 1.35;
+      max-width: 620px;
+    }
+    .hud.compact .infoLines{ display:none; }
+    .hudTopRow{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .hudTitle{ font-weight:900; }
+    .tinyBtn{
+      cursor:pointer;
+      border:none;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(255,255,255,.10);
+      color:#e8eefc;
+      border: 1px solid rgba(255,255,255,.12);
+      font-weight:800;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .tinyBtn:hover{ background: rgba(255,255,255,.16); }
+    .hud b { font-weight: 800; }
+    .hint { opacity:.9; font-size: 12px; margin-top:6px; }
+    .rightHud { position: fixed; right: 16px; top: 16px; text-align:right; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    button {
+      cursor:pointer; border:none; border-radius: 10px;
+      padding: 8px 10px; background: rgba(255,255,255,.10);
+      color:#e8eefc; border: 1px solid rgba(255,255,255,.12);
+    }
+    button:hover { background: rgba(255,255,255,.16); }
+    .pill{
+      padding: 8px 10px; border-radius: 999px;
+      background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.10);
+      color:#e8eefc; font-size:12px; opacity:.95;
+      white-space:nowrap;
+    }
+    .overlay{
+      position: fixed; inset:0; display:none;
+      align-items:center; justify-content:center;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .card{
+      width:min(580px, 92vw);
+      border-radius: 18px;
+      background: rgba(10,14,22,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding: 18px 18px 14px;
+      color:#e8eefc;
+      text-align:center;
+    }
+    .card h2{ margin: 6px 0 10px; font-size: 22px; }
+    .card p{ margin: 0 0 12px; opacity:.92; }
+    .row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom: 14px; }
+    .mini{ font-size: 13px; opacity:.9; padding: 8px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.06); }
+    .bigBtn{
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.16);
+    }
+    .bigBtn:hover{ background: rgba(255,255,255,.20); }
+
+    /* Multiplayer mini panel */
+    .mp {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255,255,255,.12);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .mp input{
+      width: 110px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color:#e8eefc;
+      outline: none;
+    }
+    .mp small{ opacity:.85; }
+    .tag{
+      display:inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
+      opacity:.92;
+      white-space:nowrap;
+    }
+  /* Mobile controls */
+#mobileControls{
+  position: fixed;
+  left: 12px; right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  display:none;
+  gap:10px;
+  z-index: 20;
+}
+#mobileControls button{
+  flex:1;
+  padding: 14px 14px;
+  border-radius: 14px;
+  font-weight: 900;
+  font-size: 16px;
+  background: rgba(255,255,255,.14);
+  border: 1px solid rgba(255,255,255,.18);
+}
+#mobileControls button:disabled{
+  opacity:.45;
+}
+
+/* Responsive canvas + HUD on small screens */
+canvas { width: min(980px, 96vw); height: auto; max-height: 72vh; }
+@media (max-width: 720px){
+  html, body{ overflow:hidden; }
+  .hud{ left: 10px; right: 10px; top: 10px; max-width: unset; font-size: 13px; }
+  .hud:not(.compact){ max-height: 42vh; overflow:auto; -webkit-overflow-scrolling: touch; }
+  .rightHud{ right: 10px; top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); }
+  #wrap{ align-items:flex-start; padding-top: 10px; padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+  canvas{ max-height: 58vh; }
+  #mobileControls{ display:flex; }
+  .mp input{ width: 92px; }
+  .mp small{ display:none; }
+}
+  
+/* Rotate hint overlay for mobile portrait */
+#rotateOverlay{
+  position: fixed; inset:0;
+  display:none;
+  align-items:center; justify-content:center;
+  background: rgba(0,0,0,.70);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+}
+#rotateOverlay .card{ width:min(520px, 92vw); }
+#rotateOverlay .rotIcon{
+  font-size: 44px;
+  margin: 6px 0 10px;
+}
+#rotateOverlay .rotText{
+  font-size: 15px;
+  line-height: 1.45;
+  opacity:.95;
+  margin-bottom: 12px;
+}
+#rotateOverlay .row{ margin-top: 8px; }
+#rotateOverlay .bigBtn{ width: 100%; max-width: 320px; }
+
+/* Landscape tuning on mobile */
+@media (max-width: 900px) and (orientation: landscape){
+  #wrap{ align-items:flex-start; padding: 0; }
+  canvas{
+    height: calc(100vh - 170px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    width: auto;
+    max-width: 98vw;
+    max-height: none;
+  }
+  .hud{ left: 10px; right: 10px; top: calc(8px + env(safe-area-inset-top)); }
+  .rightHud{ display:none; }
+  #mobileUtils{ display:flex; }
+  #mobileControls{ bottom: calc(8px + env(safe-area-inset-bottom)); }
+  #mobileControls button{ padding: 12px 12px; font-size: 16px; }
+}
+/* Portrait tuning (when allowed) */
+@media (max-width: 900px) and (orientation: portrait){
+  #wrap{ align-items:flex-start; padding-top: 10px; padding-bottom: calc(160px + env(safe-area-inset-bottom)); }
+  canvas{ max-height: 52vh; }
+}
+
+  
+    /* --- HUD Collapse (mobil için tam ekran oyun) --- */
+    #hudPeek{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 10000;
+      display: none;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      color: #e8eefc;
+      backdrop-filter: blur(8px);
+      font-weight: 900;
+      font-size: 20px;
+      line-height: 1;
+    }
+    #hudPeek:active{ transform: scale(0.98); }
+    body.hudCollapsed #hudBox,
+    body.hudCollapsed .rightHud,
+    body.hudCollapsed #mobileControls{
+      display: none !important;
+    }
+    body.hudCollapsed #hudPeek{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  </style>
+</head>
+<body>
+  <button id="hudPeek" type="button" title="Bilgileri Aç">⌄</button>
+
+  <div id="rotateOverlay">
+    <div class="card">
+      <div class="rotIcon">💻</div>
+      <h2>Bu oyun bilgisayarda oynanır</h2>
+      <p class="rotText">
+        Mobil cihazlarda oynanış kapalı. Lütfen bu bağlantıyı <b>PC / laptop</b> üzerinden açın.
+      </p>
+      <p class="hint" style="margin-top:10px;">İpucu: Linki kendine WhatsApp/Web’den veya mail ile gönderip bilgisayardan açabilirsin.</p>
+    </div>
+  </div>
+
+
+  <div class="hud" id="hudBox">
+    <div class="hudTopRow">
+      <div class="hudTitle">Hasan 💘 Betül</div>
+      <button class="tinyBtn" id="toggleInfoBtn" type="button">Bilgi</button>
+    </div>
+
+    <div class="infoLines" id="infoLines">
+      <div class="hint"><b>Oyun:</b> Hasan veya Betül'e tıkla → o kişi ❤️ fırlatır.</div>
+      <div class="hint"><b>Hak:</b> Herkesin <b>25</b> atışı var. Kalpler bazen ıskalar.</div>
+      <div class="hint"><b>Kazanma:</b> Hak bitince, <b>daha çok isabet ettiren kazanır</b>.</div>
+      <div class="hint"><b>Kalp:</b> 💖 +1, ✨💛 +2, 💔 +0, 🫥 (sahte) <b>asla vurmaz</b>.</div>
+      <div class="hint">Gereken dosya: Aynı klasörde <b>couple.jpg</b></div>
+    </div>
+
+    <div class="mp">
+
+<span class="tag" id="mpModeTag">2 kişi (aynı cihaz)</span>
+<span class="tag" id="mpStateTag">Oda: yok</span>
+<span class="tag" id="mpYouTag" style="display:none;">Sen: -</span>
+<span class="tag" id="mpPlayersTag" style="display:none;">Bağlı: 0/2</span>
+<span class="tag" id="mpErrorTag" style="display:none; border-color: rgba(255,120,120,.35); background: rgba(255,120,120,.10);">-</span>
+<input id="roomInput" placeholder="Oda kodu" maxlength="10" />
+<button id="createRoomBtn">Oda Aç</button>
+<button id="joinRoomBtn">Katıl</button>
+<button id="leaveRoomBtn" style="display:none;">Çık</button>
+<small id="mpHelp">Online 2 telefon için: aşağıdaki notu oku.</small>
+    </div>
+  </div>
+
+  <div class="rightHud">
+    <div class="pill" id="audioState">Ses: kapalı</div>
+    <button id="musicBtn">Müzik: kapalı</button>
+    <button id="resetBtn">Sıfırla</button>
+  </div>
+
+  <div id="wrap">
+    <canvas id="c" width="980" height="520"></canvas>
+  
+</div>
+
+<div id="mobileControls">
+  <button id="btnHasan">Hasan ❤️</button>
+  <button id="btnBetul">Betül ❤️</button>
+</div>
+
+<div class="overlay"
+ id="overlay">
+    <div class="card">
+      <h2 id="resultTitle">Oyun Bitti</h2>
+      <div class="row">
+        <div class="mini" id="resL"></div>
+        <div class="mini" id="resR"></div>
+      </div>
+
+      <div class="row">
+        <button class="bigBtn" id="replayBtn">Yeniden Oyna</button>
+      </div>
+
+      <p class="hint"><b>İpucu:</b> Online iki telefon istersen, bu dosyanın en altındaki “FIREBASE_CONFIG” kısmına bilgileri eklemen gerekiyor.</p>
+    </div>
+  </div>
+
+  <!-- Firebase (opsiyonel - online 2 cihaz) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const hudBox = document.getElementById("hudBox");
+  const hudPeek = document.getElementById("hudPeek");
+  const toggleInfoBtn = document.getElementById("toggleInfoBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const replayBtn = document.getElementById("replayBtn");
+  const audioStateEl = document.getElementById("audioState");
+  const musicBtn = document.getElementById("musicBtn");
+  const mAudioBtn = document.getElementById("mAudioBtn");
+  const mMusicBtn = document.getElementById("mMusicBtn");
+  const mResetBtn = document.getElementById("mResetBtn");
+  if (mAudioBtn) mAudioBtn.addEventListener("click", () => audioStateEl.click());
+  if (mMusicBtn) mMusicBtn.addEventListener("click", () => musicBtn.click());
+  if (mResetBtn) mResetBtn.addEventListener("click", () => resetBtn.click());
+
+  const overlay = document.getElementById("overlay");
+  const resultTitle = document.getElementById("resultTitle");
+  const resL = document.getElementById("resL");
+  const resR = document.getElementById("resR");
+
+  const mpModeTag = document.getElementById("mpModeTag");
+  const mpStateTag = document.getElementById("mpStateTag");
+  const mpHelp = document.getElementById("mpHelp");
+  const mpYouTag = document.getElementById("mpYouTag");
+  const mpPlayersTag = document.getElementById("mpPlayersTag");
+  const mpErrorTag = document.getElementById("mpErrorTag");
+  const btnHasan = document.getElementById("btnHasan");
+  const btnBetul = document.getElementById("btnBetul");
+  const roomInput = document.getElementById("roomInput");
+  const createRoomBtn = document.getElementById("createRoomBtn");
+  const joinRoomBtn = document.getElementById("joinRoomBtn");
+  const leaveRoomBtn = document.getElementById("leaveRoomBtn");
+
+  const rotateOverlay = document.getElementById("rotateOverlay");
+  let mobileBlocked = false;
+
+  function isMobileLike(){
+    return window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+  }
+
+  function updateOrientationUI(){
+    mobileBlocked = isMobileLike();
+    const canvasEl = document.getElementById("c");
+    if (!mobileBlocked){
+      rotateOverlay.style.display = "none";
+      if (canvasEl) canvasEl.style.pointerEvents = "";
+      return;
+    }
+    // Mobilde oyun kapalı: PC yönlendirme mesajı
+    rotateOverlay.style.display = "flex";
+    if (canvasEl) canvasEl.style.pointerEvents = "none";
+  }
+
+
+
+
+  // Mobil: "Bilgi" tıklayınca tüm yazıları gizle (sadece küçük ok kalsın)
+  function setHudCollapsed(on){
+    document.body.classList.toggle('hudCollapsed', !!on);
+    // Bilgi butonu sadece açıkken görünür (HUD içinde)
+    toggleInfoBtn.textContent = on ? 'Aç' : 'Bilgi';
+    try{ localStorage.setItem('hb_hud_collapsed', on ? '1' : '0'); }catch(_){ }
+  }
+
+  // Bilgi -> HUD'u tamamen gizle
+  toggleInfoBtn.addEventListener('click', () => setHudCollapsed(true));
+  // Ok ikonuna basınca geri aç
+  hudPeek.addEventListener('click', () => setHudCollapsed(false));
+
+  (function initHud(){
+    const isSmall = window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
+    let saved = null;
+    try{ saved = localStorage.getItem('hb_hud_collapsed'); }catch(_){ }
+    // mobilde varsayılan: açık (ama daha az alan kaplasın diye info satırları zaten CSS ile küçük)
+    if (saved === '1') setHudCollapsed(true);
+    else setHudCollapsed(false);
+  })();
+
+  const W = 980, H = 520;
+  canvas.width = W; canvas.height = H;
+
+  // --- Foto kırpma ayarı (couple.jpg = 1600x900) ---
+  const HEAD_CROP = {
+    left:  { x0: 213, y0:  24, x1: 796, y1: 607 }, // fotoğrafta soldaki (Betül)
+    right: { x0: 613, y0: 164, x1:1047, y1: 598 }  // fotoğrafta sağdaki (Hasan)
+  };
+  // Oyunda solda Hasan, sağda Betül:
+  const MAP = { leftCharUses: "right", rightCharUses: "left" };
+
+  // --- Ses ---
+  let audioCtx = null;
+  let audioUnlocked = false;
+  let musicOn = false;
+  let musicNodes = null;
+
+  // --- SFX (kendi ses kayıtların) ---
+  // Bu dosyalar aynı klasörde "sfx/" altında olmalı. İsimleri istersen değiştirebiliriz.
+  // Desteklenen format: .mp3 veya .wav (mp3 öneririm).
+  let sfxOn = true;
+  const SFX_FILES = {
+    shootL: "sfx/hasan_shoot.mp3",
+    shootR: "sfx/betul_shoot.mp3",
+hit_gold: "sfx/hit_gold.mp3",
+    hit_broken: "sfx/hit_broken.mp3",
+    miss_fake: "sfx/fake_miss.mp3",
+    winL: "sfx/hasan_win.mp3",
+    winR: "sfx/betul_win.mp3",
+    tie: "sfx/tie.mp3",
+    reset: "sfx/reset.mp3",
+  };
+
+  // Nadiren çalan ekstra seslendirmeler (vuruşlarda)
+  const VOICE_EXTRAS = [
+    "sfx/voice_gold.mp3",
+    "sfx/voice_misc.mp3",
+  ];
+  const sfx = {};
+
+  function makeAudio(src, vol=1){
+    const a = new Audio(src);
+    a.preload = "auto";
+    a.volume = vol;
+    // dosya yoksa sessizce devre dışı bırak
+    a.addEventListener("error", () => { /* ignore */ });
+    return a;
+  }
+
+  function initSfx(){
+    // SFX dosyaları opsiyonel: varsa oynar, yoksa fallback devrede.
+    sfx.shootL = makeAudio(SFX_FILES.shootL, 0.9);
+    sfx.shootR = makeAudio(SFX_FILES.shootR, 0.9);
+    sfx.hit_normal = makeAudio(SFX_FILES.hit_normal, 0.9);
+    sfx.hit_gold = makeAudio(SFX_FILES.hit_gold, 0.95);
+    sfx.hit_broken = makeAudio(SFX_FILES.hit_broken, 0.85);
+    sfx.miss_fake = makeAudio(SFX_FILES.miss_fake, 0.85);
+    sfx.winL = makeAudio(SFX_FILES.winL, 1.0);
+    sfx.winR = makeAudio(SFX_FILES.winR, 1.0);
+    sfx.tie = makeAudio(SFX_FILES.tie, 1.0);
+    sfx.reset = makeAudio(SFX_FILES.reset, 0.9);
+  }
+
+  // --- SFX playback policy: no overlap + nadiren voice ---
+  // Kanal bazlı: aynı anda aynı kanalda tek ses; biri bitmeden diğeri başlamaz (skip)
+  const SFX_CHANNEL = {
+    shootL: "shoot",
+    shootR: "shoot",
+    hit_gold: "hit",
+    hit_broken: "hit",
+    miss_fake: "voice",
+    winL: "voice",
+    winR: "voice",
+    tie: "voice",
+    reset: "ui",
+  };
+
+  // Daha nadir gelsin diye bazı seslere şans + minimum aralık
+  const SFX_RULES = {
+    shootL:     { chance: 0.55, min: 350 },
+    shootR:     { chance: 0.55, min: 350 },
+    hit_gold:   { chance: 0.70, min: 280 },
+    hit_broken: { chance: 0.70, min: 280 },
+    reset:      { chance: 1.00, min: 300 },
+    winL:       { chance: 1.00, min: 1200 },
+    winR:       { chance: 1.00, min: 1200 },
+    tie:        { chance: 1.00, min: 1200 },
+    miss_fake:  { chance: 0.50, min: 900 },
+  };
+
+  const sfxLastAt = Object.create(null);
+
+  const sfxChanPlaying = Object.create(null);
+
+  function canPlayOnChannel(chan){
+    const a = sfxChanPlaying[chan];
+    return !a || a.paused || a.ended;
+  }
+
+  function markChannelPlaying(chan, a){
+    sfxChanPlaying[chan] = a;
+    const clear = () => {
+      if (sfxChanPlaying[chan] === a) sfxChanPlaying[chan] = null;
+    };
+    a.onended = clear;
+    a.onpause = clear;
+  }
+
+  function playSfx(key, opts={}){
+    if (!sfxOn) return false;
+    if (!audioUnlocked) return false;
+    const a = sfx[key];
+    if (!a) return false;
+
+    const chan = opts.chan || SFX_CHANNEL[key] || "fx";
+
+    
+
+    const now = performance.now();
+    const rule = SFX_RULES[key] || { chance: 1, min: 0 };
+
+    // şans filtresi (bazı efektler daha nadir)
+    if (rule.chance < 1 && Math.random() > rule.chance) return false;
+
+    // minimum aralık (spam önleme)
+    const last = sfxLastAt[key] || 0;
+    if (now - last < rule.min) return false;// biri bitmeden diğeri çalmasın
+    if (!canPlayOnChannel(chan)) return false;
+
+    try{
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.catch) p.catch(()=>{});
+      markChannelPlaying(chan, a);
+      sfxLastAt[key] = performance.now();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function maybePlayExtraVoice(){
+    // Vuruşlarda nadiren seslendirme (çakışmasın diye voice kanalını kullanır)
+    // %10 olasılık (ekstra seslendirme)
+    if (Math.random() > 0.10) return false;
+    if (!VOICE_EXTRAS || !VOICE_EXTRAS.length) return false;
+
+    if (!canPlayOnChannel("voice")) return false;
+
+    const url = VOICE_EXTRAS[(Math.random()*VOICE_EXTRAS.length)|0];
+    try{
+      const a = new Audio(url);
+      a.preload = "auto";
+      const p = a.play();
+      if (p && p.catch) p.catch(()=>{});
+      markChannelPlaying("voice", a);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+
+  function playHit(kindKey){
+    // Kayıt varsa onu çal, yoksa mevcut komik webaudio fallback
+    const k = (kindKey === "gold") ? "hit_gold" : (kindKey === "broken" ? "hit_broken" : "hit_normal");
+    const ok = playSfx(k);
+    if (!ok) playHitFunny();
+  }
+
+  function playShoot(side, kindKey){
+    // side: "L"|"R"
+    playSfx(side === "L" ? "shootL" : "shootR");
+    if (kindKey === "fake") playSfx("miss_fake");
+  }
+
+  function playEnd(winner){
+    if (winner === "L") playSfx("winL");
+    else if (winner === "R") playSfx("winR");
+    else playSfx("tie");
+  }
+
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+
+  initSfx();
+
+  async function unlockAudio() {
+    try {
+      const ac = ensureAudio();
+      if (ac.state === "suspended") await ac.resume();
+
+      // silent tick (Chrome unlock)
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      g.gain.value = 0.00001;
+      o.frequency.value = 440;
+      o.connect(g).connect(ac.destination);
+      o.start();
+      o.stop(ac.currentTime + 0.02);
+
+      audioUnlocked = true;
+      audioStateEl.textContent = "Ses: açık";
+    } catch (e) {
+      audioUnlocked = false;
+      audioStateEl.textContent = "Ses: kapalı";
+      console.warn("Audio unlock hata:", e);
+    }
+  }
+  // SFX aç/kapat (pill'e tıkla)
+  audioStateEl.style.cursor = "pointer";
+  audioStateEl.title = "Tıkla: Ses efektlerini aç/kapat";
+  audioStateEl.addEventListener("click", async () => {
+    if (!audioUnlocked) await unlockAudio();
+    sfxOn = !sfxOn;
+    audioStateEl.textContent = sfxOn ? "Ses: açık" : "Ses: kapalı";
+  });
+
+
+
+  // ✅ Komik hit efekti: "boing + pop"
+  function playHitFunny() {
+    const ac = ensureAudio();
+    if (ac.state === "suspended") ac.resume().catch(()=>{});
+    const t0 = ac.currentTime;
+
+    // 1) Boing
+    const o1 = ac.createOscillator();
+    const g1 = ac.createGain();
+    o1.type = "sine";
+    o1.frequency.setValueAtTime(720, t0);
+    o1.frequency.exponentialRampToValueAtTime(220, t0 + 0.11);
+    g1.gain.setValueAtTime(0.0001, t0);
+    g1.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+    o1.connect(g1).connect(ac.destination);
+    o1.start(t0);
+    o1.stop(t0 + 0.20);
+
+    // 2) Pop/Click
+    const o2 = ac.createOscillator();
+    const g2 = ac.createGain();
+    o2.type = "square";
+    o2.frequency.setValueAtTime(980, t0 + 0.02);
+    g2.gain.setValueAtTime(0.0001, t0 + 0.02);
+    g2.gain.exponentialRampToValueAtTime(0.18, t0 + 0.025);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.055);
+    o2.connect(g2).connect(ac.destination);
+    o2.start(t0 + 0.02);
+    o2.stop(t0 + 0.06);
+
+    // 3) Tiny noise burst
+    const noiseDur = 0.06;
+    const bufferSize = Math.floor(ac.sampleRate * noiseDur);
+    const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    const noise = ac.createBufferSource();
+    noise.buffer = buffer;
+    const ng = ac.createGain();
+    ng.gain.setValueAtTime(0.0001, t0 + 0.03);
+    ng.gain.exponentialRampToValueAtTime(0.22, t0 + 0.035);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.09);
+    noise.connect(ng).connect(ac.destination);
+    noise.start(t0 + 0.03);
+    noise.stop(t0 + 0.10);
+  }
+
+  // --- Arka plan müziği (çok hafif, loop) ---
+  function startMusic() {
+    const ac = ensureAudio();
+    if (ac.state === "suspended") ac.resume().catch(()=>{});
+
+    stopMusic();
+
+    // --- Master ---
+    const master = ac.createGain();
+    master.gain.value = 0.055; // çok düşük
+    master.connect(ac.destination);
+
+    // --- Hafif "oda" efekti (delay + feedback + lowpass) ---
+    const delay = ac.createDelay(0.6);
+    delay.delayTime.value = 0.23;
+
+    const fb = ac.createGain();
+    fb.gain.value = 0.28;
+
+    const dlp = ac.createBiquadFilter();
+    dlp.type = "lowpass";
+    dlp.frequency.value = 1400;
+    dlp.Q.value = 0.7;
+
+    delay.connect(dlp).connect(fb).connect(delay);
+
+    // dry/wet mix
+    const wet = ac.createGain(); wet.gain.value = 0.35;
+    const dry = ac.createGain(); dry.gain.value = 0.85;
+
+    dry.connect(master);
+    wet.connect(master);
+    delay.connect(wet);
+
+    // --- Pad (daha hoş: detune + filtre hareketi) ---
+    const lp = ac.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 950;
+    lp.Q.value = 0.9;
+
+    const padBus = ac.createGain();
+    padBus.gain.value = 1.0;
+
+    padBus.connect(lp);
+    lp.connect(dry);
+    lp.connect(delay);
+
+    const o1 = ac.createOscillator();
+    const o2 = ac.createOscillator();
+    const o3 = ac.createOscillator();
+    o1.type = "sine";
+    o2.type = "triangle";
+    o3.type = "sine";
+    o1.detune.value = -7;
+    o2.detune.value = +6;
+    o3.detune.value = +12;
+
+    const pg1 = ac.createGain(); pg1.gain.value = 0.45;
+    const pg2 = ac.createGain(); pg2.gain.value = 0.36;
+    const pg3 = ac.createGain(); pg3.gain.value = 0.22;
+
+    o1.connect(pg1).connect(padBus);
+    o2.connect(pg2).connect(padBus);
+    o3.connect(pg3).connect(padBus);
+
+    // --- Bass (yumuşak) ---
+    const bass = ac.createOscillator();
+    bass.type = "sine";
+    const bg = ac.createGain();
+    bg.gain.value = 0.0; // envelope ile açacağız
+    bass.connect(bg).connect(dry);
+
+    // --- LFO: filtreyi hafif hareket ettir (lo-fi hissi) ---
+    const lfo = ac.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.07;
+    const lfoG = ac.createGain();
+    lfoG.gain.value = 260;
+    lfo.connect(lfoG);
+    lfoG.connect(lp.frequency);
+
+    // Akor döngüsü (hoş & romantik): Am7 - Fmaj7 - Cmaj7 - G6
+    const midiToHz = (m) => 440 * Math.pow(2, (m - 69) / 12);
+    const chords = [
+      { name:"Am7",  midis:[57, 60, 64, 67], bass:45 }, // A3 C4 E4 G4 | A2
+      { name:"Fmaj7",midis:[53, 57, 60, 64], bass:41 }, // F3 A3 C4 E4 | F2
+      { name:"Cmaj7",midis:[48, 52, 55, 59], bass:36 }, // C3 E3 G3 B3 | C2
+      { name:"G6",   midis:[50, 55, 59, 62], bass:43 }, // D3 G3 B3 D4 (G6 hissi) | G2
+    ];
+
+    let step = 0;
+    const setChord = (t) => {
+      const c = chords[step % chords.length];
+
+      // Pad: 3 osilatöre 3 nota dağıt (kalan notalar armoniyi doldurur)
+      const hz = c.midis.map(midiToHz);
+      o1.frequency.setValueAtTime(hz[0], t);
+      o2.frequency.setValueAtTime(hz[1], t);
+      o3.frequency.setValueAtTime(hz[2], t);
+
+      // Filtre biraz aç/kapa
+      lp.frequency.cancelScheduledValues(t);
+      lp.frequency.setValueAtTime(820, t);
+      lp.frequency.linearRampToValueAtTime(1150, t + 0.6);
+      lp.frequency.linearRampToValueAtTime(900, t + 1.2);
+
+      // Bass envelope
+      const bHz = midiToHz(c.bass);
+      bass.frequency.setValueAtTime(bHz, t);
+      bg.gain.cancelScheduledValues(t);
+      bg.gain.setValueAtTime(0.0001, t);
+      bg.gain.linearRampToValueAtTime(0.22, t + 0.05);
+      bg.gain.linearRampToValueAtTime(0.0001, t + 1.25);
+
+      step++;
+    };
+
+    const t0 = ac.currentTime + 0.03;
+
+    // küçük fade-in
+    master.gain.setValueAtTime(0.0001, t0);
+    master.gain.linearRampToValueAtTime(0.055, t0 + 0.9);
+
+    o1.start(t0); o2.start(t0); o3.start(t0);
+    bass.start(t0);
+    lfo.start(t0);
+
+    // ilk akor + döngü
+    setChord(t0);
+    const intervalMs = 1500;
+    const timer = setInterval(() => {
+      const t = ac.currentTime + 0.03;
+      setChord(t);
+    }, intervalMs);
+
+    musicNodes = { master, delay, fb, dlp, wet, dry, lp, padBus, o1, o2, o3, bass, bg, lfo, lfoG, timer };
+  }
+
+  function stopMusic() {
+    if (!musicNodes) return;
+    try {
+      clearInterval(musicNodes.timer);
+      const ac = ensureAudio();
+      const t = ac.currentTime;
+
+      // fade out
+      if (musicNodes.master?.gain) musicNodes.master.gain.setTargetAtTime(0.0001, t, 0.06);
+
+      // stop oscillators if they exist
+      const oscKeys = ["o1","o2","o3","bass","lfo","oA","oB"]; // eski isimler de güvenli dursun
+      for (const k of oscKeys) {
+        const o = musicNodes[k];
+        if (o && typeof o.stop === "function") {
+          try { o.stop(t + 0.15); } catch {}
+        }
+      }
+    } catch {}
+    musicNodes = null;
+  }
+
+  function toggleMusic() {
+    musicOn = !musicOn;
+    if (musicOn) {
+      startMusic();
+      musicBtn.textContent = "Müzik: açık";
+    } else {
+      stopMusic();
+      musicBtn.textContent = "Müzik: kapalı";
+    }
+  }
+
+  musicBtn.addEventListener("click", async () => {
+    if (!audioUnlocked) await unlockAudio();
+    toggleMusic();
+  });
+
+  // --- Kafalar ---
+  const couple = new Image();
+  couple.src = "couple.jpg";
+
+  function makeHeadImage(crop) {
+    const cw = Math.max(1, crop.x1 - crop.x0);
+    const ch = Math.max(1, crop.y1 - crop.y0);
+    const out = document.createElement("canvas");
+    const size = 170;
+    out.width = size; out.height = size;
+    const octx = out.getContext("2d");
+
+    const s = Math.max(cw, ch);
+    const sx = crop.x0 - Math.floor((s - cw) / 2);
+    const sy = crop.y0 - Math.floor((s - ch) / 2);
+
+    octx.save();
+    octx.beginPath();
+    octx.arc(size/2, size/2, (size/2)-3, 0, Math.PI*2);
+    octx.clip();
+    octx.drawImage(couple, sx, sy, s, s, 0, 0, size, size);
+    octx.restore();
+
+    
+    // --- 7x COMBO overlay ---
+    if (state.comboFlash > 0) {
+      const a = Math.min(1, state.comboFlash / 0.2);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.font = "900 56px system-ui, Arial";
+      ctx.fillStyle = "#FFD700";
+      ctx.textAlign = "center";
+      let comboText = "";
+      if (state.comboCount === 3) comboText = "3x COMBO";
+      else if (state.comboCount === 4) comboText = "4x COMBO";
+      else if (state.comboCount === 5) comboText = "5x COMBO";
+      else if (state.comboCount > 5) comboText = "EFSANE COMBO!";
+
+      if (comboText) {
+        ctx.fillText(comboText, W * 0.5, H * 0.25);
+      }
+      ctx.restore();
+    }
+octx.lineWidth = 5;
+    octx.strokeStyle = "rgba(255,255,255,0.85)";
+    octx.beginPath();
+    octx.arc(size/2, size/2, (size/2)-3, 0, Math.PI*2);
+    octx.stroke();
+
+    return out;
+  }
+
+  let headLeft = null;  // Hasan
+  let headRight = null; // Betül
+
+  // --- Oyun ---
+  const MAX_SHOTS = 25;
+
+  const state = {
+    time: 0,
+    bullets: [],
+    particles: [],
+    confetti: [],
+    scoreL: 0,
+    scoreR: 0,
+    shotsL: MAX_SHOTS,
+    shotsR: MAX_SHOTS,
+    cooldown: 0,
+    shakeL: 0,
+    shakeR: 0,
+    flash: 0,
+    finished: false,
+    winner: null,       // "L" | "R" | "T"
+    winT: 0,            // win anim time
+  };
+
+  const leftChar  = { name: "Hasan", x: 190, y: 330, headR: 64, bodyH: 170 };
+  const rightChar = { name: "Betül", x: 790, y: 330, headR: 64, bodyH: 170 };
+
+  function resetGame() {
+    state.bullets.length = 0;
+    state.particles.length = 0;
+    state.confetti.length = 0;
+    state.scoreL = 0;
+    state.scoreR = 0;
+    state.shotsL = MAX_SHOTS;
+    state.shotsR = MAX_SHOTS;
+    state.cooldown = 0;
+    state.shakeL = 0;
+    state.shakeR = 0;
+    state.flash = 0;
+    state.finished = false;
+    state.winner = null;
+    state.winT = 0;
+    overlay.style.display = "none";
+    // online moddaysa host reset yayınlayabilir; burada yerelde reset.
+  }
+
+  async function doResetAll(){
+    resetGame();
+    playSfx('reset');
+    if (roomId && db){
+      try {
+        await mpResetRoomState();
+      } catch (e) { console.warn("mpResetRoomState hata:", e); }
+      mpSend({ type:"reset" });
+    }
+  }
+
+  resetBtn.addEventListener("click", () => { doResetAll(); });
+  replayBtn.addEventListener("click", () => { doResetAll(); });
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function dist(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+
+  // --- Kalp türleri ---
+  const HEART = {
+    normal: { key:"normal", score: 1 },
+    gold:   { key:"gold",   score: 2 },
+    broken: { key:"broken", score: 0 },
+    fake:   { key:"fake",   score: 0 } // asla vurmaz
+  };
+
+  function rollHeartType() {
+    const r = Math.random();
+    if (r < 0.68) return HEART.normal;
+    if (r < 0.83) return HEART.broken;
+    if (r < 0.95) return HEART.gold;
+    return HEART.fake;
+  }
+
+  function drawHeart(x,y,scale=1, kind="normal", rot=0) {
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(rot);
+    ctx.scale(scale, scale);
+
+    // temel kalp şekli
+    const heartPath = () => {
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.bezierCurveTo(12, -22, 34, -8, 0, 18);
+      ctx.bezierCurveTo(-34, -8, -12, -22, 0, -10);
+      ctx.closePath();
+    };
+
+    if (kind === "gold") {
+      heartPath();
+      ctx.fillStyle = "rgba(255, 210, 70, 0.95)";
+      ctx.fill();
+      // parıltı
+      ctx.strokeStyle = "rgba(255,255,255,0.60)";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-8, -2); ctx.lineTo(-2, -8);
+      ctx.moveTo(8, -2);  ctx.lineTo(2, -8);
+      ctx.stroke();
+    } else if (kind === "broken") {
+      heartPath();
+      ctx.fillStyle = "rgba(255,90,140,0.65)";
+      ctx.fill();
+      // çatlak
+      ctx.strokeStyle = "rgba(15,20,30,0.65)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(0,-9);
+      ctx.lineTo(-4,-2);
+      ctx.lineTo(3,5);
+      ctx.lineTo(-2,12);
+      ctx.stroke();
+    } else if (kind === "fake") {
+      // hayalet kalp: sadece kontur
+      heartPath();
+      ctx.strokeStyle = "rgba(232,238,252,0.65)";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      // küçük “?” efekti
+      ctx.fillStyle = "rgba(232,238,252,0.85)";
+      ctx.font = "bold 16px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("?", 0, 6);
+    } else {
+      heartPath();
+      ctx.fillStyle = "rgba(255,90,140,0.95)";
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function spawnHitParticles(x,y, kind="normal") {
+    const base = kind === "gold" ? 22 : 14;
+    for (let i=0;i<base;i++) {
+      const a = Math.random()*Math.PI*2;
+      const sp = 140 + Math.random()*240;
+      state.particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.35 + Math.random()*0.30, kind });
+    }
+  }
+
+  function spawnConfettiBurst(x, y, intensity=32) {
+    for (let i=0;i<intensity;i++){
+      const a = (-Math.PI/2) + (Math.random()*Math.PI);
+      const sp = 180 + Math.random()*360;
+      state.confetti.push({
+        x, y,
+        vx: Math.cos(a)*sp,
+        vy: Math.sin(a)*sp,
+        rot: Math.random()*Math.PI*2,
+        vr: (Math.random()*10-5),
+        life: 0.9 + Math.random()*0.7,
+        s: 6 + Math.random()*6
+      });
+    }
+  }
+
+  function charHeadCenter(ch) {
+    return { cx: ch.x, cy: ch.y - ch.bodyH + 30 };
+  }
+
+  function bulletHitsChar(b, ch) {
+    if (b.kind === "fake") return false; // sahte kalp asla vurmaz
+
+    const hc = charHeadCenter(ch);
+    const headHit = dist(b.x, b.y, hc.cx, hc.cy) <= (ch.headR + b.r - 6);
+
+    const bx0 = ch.x - 55 - b.r, bx1 = ch.x + 55 + b.r;
+    const by0 = ch.y - ch.bodyH + 95 - b.r, by1 = ch.y + 10 + b.r;
+    const bodyHit = (b.x>=bx0 && b.x<=bx1 && b.y>=by0 && b.y<=by1);
+
+    return headHit || bodyHit;
+  }
+
+  function isPointOnChar(px, py, ch) {
+    const hc = charHeadCenter(ch);
+    if (dist(px,py,hc.cx,hc.cy) <= ch.headR) return true;
+    const bx0 = ch.x - 55, bx1 = ch.x + 55;
+    const by0 = ch.y - ch.bodyH + 95, by1 = ch.y + 10;
+    return (px>=bx0 && px<=bx1 && py>=by0 && py<=by1);
+  }
+
+  function setFinished() {
+    state.finished = true;
+    state.winT = 0;
+
+    let title = "Berabere! 🤝";
+    let winner = "T";
+    if (state.scoreL > state.scoreR) { title = "Hasan Kazandı! 🏆"; winner = "L"; }
+    else if (state.scoreR > state.scoreL) { title = "Betül Kazandı! 🏆"; winner = "R"; }
+
+    state.winner = winner;
+
+    resultTitle.textContent = title;
+    resL.textContent = `Hasan isabet: ${state.scoreL} / 25`;
+    resR.textContent = `Betül isabet: ${state.scoreR} / 25`;
+
+    overlay.style.display = "flex";
+
+    // bitiş sesi
+    playEnd(winner);
+
+    // final konfeti
+    const cx = W/2;
+    spawnConfettiBurst(cx, 120, 60);
+  }
+
+  function maybeFinish() {
+    if (state.finished) return;
+    // Son kalp atıldıktan sonra mermi uçuşu / çarpışma bitmeden oyunu bitirme
+    if (state.shotsL <= 0 && state.shotsR <= 0 && state.bullets.length === 0) setFinished();
+  }
+
+  // Rastgele hedef + rastgele kavis + bazen net ıskalama
+  function fire(fromLeft, forcedKindKey=null, opts={}) {
+    if (state.finished) return;
+    if (state.cooldown > 0) return;
+
+    const consumeShot = (opts.consumeShot !== false);
+    const owner = (opts.owner !== false);
+
+    if (fromLeft && state.shotsL <= 0) return;
+    if (!fromLeft && state.shotsR <= 0) return;
+
+    state.cooldown = 0.14;
+
+    if (consumeShot) {
+      if (fromLeft) state.shotsL--;
+      else state.shotsR--;
+    }
+
+    const src = fromLeft ? leftChar : rightChar;
+    const dst = fromLeft ? rightChar : leftChar;
+
+    const sx = src.x;
+    const sy = src.y - src.bodyH + 30;
+
+    // kalp türü
+    const kind = forcedKindKey ? (HEART[forcedKindKey] || HEART.normal) : rollHeartType();
+
+    let tx, ty;
+
+    // sahte kalp: hedefi daha “alışılmadık” yapıp komik ıskalat
+    const aimBias = (kind.key === "fake") ? 0.35 : 0.70;
+
+    if (Math.random() < aimBias) {
+      tx = dst.x;
+      ty = dst.y - dst.bodyH + 30;
+      tx += (Math.random() * 300) - 150;
+      ty += (Math.random() * 240) - 120;
+    } else {
+      tx = 60 + Math.random() * (W - 120);
+      ty = 60 + Math.random() * (H - 200);
+    }
+
+    tx = clamp(tx, 60, W-60);
+    ty = clamp(ty, 40, H-140);
+
+    const dx = tx - sx;
+    const dy = ty - sy;
+    const len = Math.hypot(dx,dy) || 1;
+
+    const speed = 610 + Math.random() * 70;
+
+    // broken: daha “ağır” düşsün
+    let extraLob = (Math.random() * 340) - 170;
+    if (kind.key === "broken") extraLob += 90;
+    if (kind.key === "gold") extraLob -= 60;
+
+    state.bullets.push({
+      x: sx, y: sy,
+      vx: (dx/len)*speed,
+      vy: (dy/len)*speed + extraLob,
+      fromLeft,
+      owner,
+      r: 14,
+      alive: true,
+      kind: kind.key,
+      rot: (Math.random()*0.8 - 0.4)
+    });
+
+    maybeFinish();
+  }
+
+  function applyScore(attackerIsLeft, kindKey) {
+    const add = (HEART[kindKey] || HEART.normal).score;
+    // --- combo sistemi (aynı taraf art arda, kademeli efektler) ---
+    if (add > 0) {
+      const side = attackerIsLeft ? "L" : "R";
+      if (state.comboSide === side) {
+        state.comboCount++;
+      } else {
+        state.comboSide = side;
+        state.comboCount = 1;
+      }
+
+      // 3 = küçük, 4 = normal, 5 = büyük, >5 = efsane
+      if (state.comboCount === 3) {
+        state.comboFlash = 0.25;
+        spawnConfettiBurst(W * 0.5, H * 0.32, 25);
+      } else if (state.comboCount === 4) {
+        state.comboFlash = 0.45;
+        state.flash = Math.max(state.flash, 0.25);
+        spawnConfettiBurst(W * 0.5, H * 0.30, 50);
+        playSfx("hit_gold");
+      } else if (state.comboCount === 5) {
+        state.comboFlash = 0.7;
+        state.flash = Math.max(state.flash, 0.35);
+        spawnConfettiBurst(W * 0.5, H * 0.28, 80);
+        playSfx("hit_gold");
+      } else if (state.comboCount > 5) {
+        state.comboFlash = 1.0;
+        state.flash = Math.max(state.flash, 0.45);
+        spawnConfettiBurst(W * 0.5, H * 0.25, 120);
+        playSfx("hit_gold");
+      }
+    } else {
+      state.comboCount = 0;
+      state.comboSide = null;
+    }
+
+
+    // local update (single-player & same-device)
+    if (!roomId) {
+      if (attackerIsLeft) state.scoreL += add;
+      else state.scoreR += add;
+      return;
+    }
+
+    // multiplayer: skor veritabanı state'inden okunur (tek kaynak)
+    // skoru sadece "owner" kurşunların vurduğu tarafta güncelliyoruz; diğer cihaz sadece görsel oynatır.
+    mpBumpScore(attackerIsLeft ? "L" : "R", add);
+  }
+
+  function hitTarget(targetIsLeft, x, y, kindKey, attackerIsLeft, doScore=true) {
+    playHit(kindKey);
+    spawnHitParticles(x,y, kindKey);
+    state.flash = 0.10;
+
+    if (targetIsLeft) state.shakeL = 0.25;
+    else state.shakeR = 0.25;
+
+    if (doScore) applyScore(attackerIsLeft, kindKey);
+
+    
+    maybePlayExtraVoice();
+// gold vurduysa ekstra mini konfeti
+    if (kindKey === "gold") spawnConfettiBurst(x, y, 22);
+  }
+
+  // --- Multiplayer (opsiyonel, Firebase ile online 2 telefon) ---
+  // 1) FIREBASE_CONFIG'i doldurursan, "Oda Aç / Katıl" aktif olur.
+  // 2) Aksi halde oyun zaten 2 kişi aynı cihazdan oynanabilir (hotseat).
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBPbQvcV1MXdM1Fiw3wwbGZhfCX5XvAOIY",
+    authDomain: "hasan-betul-game.firebaseapp.com",
+    databaseURL: "https://hasan-betul-game-default-rtdb.firebaseio.com",
+    projectId: "hasan-betul-game",
+    storageBucket: "hasan-betul-game.firebasestorage.app",
+    messagingSenderId: "201232806252",
+    appId: "1:201232806252:web:e4c7d1e229d00b64024349"
+  };
+
+  
+let db = null;
+let roomId = null;
+let isHost = false;
+
+// aynı tarayıcıyı tanımak için
+const clientId = (() => {
+  const k = "hbGameClientId";
+  const v = localStorage.getItem(k);
+  if (v) return v;
+  const nv = (crypto?.randomUUID?.() || (Math.random().toString(16).slice(2) + Date.now().toString(16))).slice(0, 20);
+  localStorage.setItem(k, nv);
+  return nv;
+})();
+
+let mySide = null;   // "L" (Hasan) | "R" (Betül)
+let playersUnsub = null;
+let eventsRef = null;
+let stateRef = null;
+
+function hasFirebase() {
+  return !!(FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL);
+}
+
+function mpSetError(msg) {
+  if (!msg) {
+    mpErrorTag.style.display = "none";
+    mpErrorTag.textContent = "-";
+    return;
+  }
+  mpErrorTag.style.display = "inline-block";
+  mpErrorTag.textContent = msg;
+}
+
+function mpUiUpdate(playersCount = 0) {
+  if (!roomId) {
+    mpModeTag.textContent = "2 kişi (aynı cihaz)";
+    mpStateTag.textContent = "Oda: yok";
+    mpYouTag.style.display = "none";
+    mpPlayersTag.style.display = "none";
+    leaveRoomBtn.style.display = "none";
+    createRoomBtn.style.display = hasFirebase() ? "inline-block" : "none";
+    joinRoomBtn.style.display = hasFirebase() ? "inline-block" : "none";
+    roomInput.style.display = hasFirebase() ? "inline-block" : "none";
+    mpHelp.textContent = hasFirebase()
+      ? "Online: Biriniz oda açsın, diğeriniz aynı kodla katılsın."
+      : "Online 2 telefon için: en alttaki FIREBASE_CONFIG notunu uygula.";
+    return;
+  }
+
+  mpModeTag.textContent = "Online 2 cihaz";
+  mpStateTag.textContent = `Oda: ${roomId}${isHost ? " (host)" : ""}`;
+  mpYouTag.style.display = "inline-block";
+  mpYouTag.textContent = `Sen: ${mySide === "L" ? "Hasan" : (mySide === "R" ? "Betül" : "-")}`;
+  mpPlayersTag.style.display = "inline-block";
+  mpPlayersTag.textContent = `Bağlı: ${playersCount}/2`;
+  leaveRoomBtn.style.display = "inline-block";
+  createRoomBtn.style.display = "none";
+  joinRoomBtn.style.display = "none";
+  roomInput.style.display = "none";
+
+  // Oda doluluk / bekleme durumu
+  mpHelp.textContent = (playersCount < 2)
+    ? "Diğer kişi bekleniyor… (2. kişi katılınca başlayabilirsiniz)"
+    : "İkiniz de bağlısınız ✅ Şimdi tıklayabilirsiniz.";
+}
+
+function safeRoomCode(s) {
+  return (s || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10);
+}
+
+async function mpCleanupOldRooms(maxAgeMs = 24*60*60*1000) {
+  if (!db) return;
+  try {
+    const cutoff = Date.now() - maxAgeMs;
+    const snap = await db.ref("rooms").once("value");
+    const rooms = snap.val() || {};
+    const tasks = [];
+    for (const [rid, rv] of Object.entries(rooms)) {
+      if (!rv) continue;
+      const last = rv.lastActive || rv.createdAt || 0;
+      const players = rv.players ? Object.keys(rv.players) : [];
+      // oyuncu yok + eski ise sil
+      if (players.length === 0 && last && last < cutoff) {
+        tasks.push(db.ref(`rooms/${rid}`).remove());
+      }
+    }
+    if (tasks.length) await Promise.allSettled(tasks);
+  } catch (e) {
+    console.warn("mpCleanupOldRooms hata:", e);
+  }
+}
+
+function mpInit() {
+  if (!hasFirebase()) { mpUiUpdate(); return; }
+
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    // eski odaları temizle (best-effort)
+    mpCleanupOldRooms(60*60*1000);
+    try { setInterval(()=>mpCleanupOldRooms(60*60*1000), 5*60*1000); } catch {}
+  } catch (e) {
+    console.warn("Firebase init hata:", e);
+    db = null;
+    mpSetError("Firebase başlatılamadı.");
+  }
+  mpUiUpdate();
+}
+
+function mpListenEvents(room) {
+  if (!db) return;
+  if (eventsRef) try { eventsRef.off(); } catch {}
+  eventsRef = db.ref(`rooms/${room}/events`).limitToLast(50);
+
+  eventsRef.on("child_added", (snap) => {
+    const ev = snap.val();
+    if (!ev || !ev.type) return;
+    if (ev.by && ev.by === clientId) return; // kendi eventini tekrar uygulama
+
+    if (ev.type === "fire") {
+      const fromLeft = ev.side === "L";
+      fire(fromLeft, ev.kind || "normal", {consumeShot:false, owner:false});
+    } else if (ev.type === "reset") {
+      resetGame();
+    }
+  });
+}
+
+function mpListenPlayers(room) {
+  if (!db) return;
+  const ref = db.ref(`rooms/${room}/players`);
+  if (playersUnsub) { try { playersUnsub.off(); } catch {} }
+  playersUnsub = ref;
+
+  ref.on("value", (snap) => {
+    const players = snap.val() || {};
+    const ids = Object.keys(players);
+    const count = ids.length;
+
+    // UI güncelle
+    mpSetError(null);
+    mpUiUpdate(count);
+
+    // Butonları role göre kilitle
+    if (mySide === "L") {
+      btnHasan.disabled = false;
+      btnBetul.disabled = true;
+    } else if (mySide === "R") {
+      btnHasan.disabled = true;
+      btnBetul.disabled = false;
+    } else {
+      // aynı cihaz / rol seçilmemiş
+      btnHasan.disabled = false;
+      btnBetul.disabled = false;
+    }
+
+    // Eğer oda dolu ve biz oda dışında değilsek, iyi
+    // Eğer biz odadayken kendi kaydımız silinmişse (disconnect vs), odayı kapat
+    if (roomId && !players[clientId]) {
+      // bağlantı kopmuş olabilir
+      mpSetError("Bağlantı koptu. Tekrar katıl.");
+      leaveRoom();
+    }
+  });
+}
+
+
+async function mpBumpScore(side, add) {
+  if (!db || !roomId) return;
+  try {
+    const ref = db.ref(`rooms/${roomId}/state`);
+    await ref.transaction((s) => {
+      s = s || {};
+      s.scoreL = s.scoreL ?? 0;
+      s.scoreR = s.scoreR ?? 0;
+      if (side === "L") s.scoreL += add;
+      else s.scoreR += add;
+      s.lastActive = Date.now();
+      return s;
+    });
+    try { db.ref(`rooms/${roomId}/lastActive`).set(Date.now()); } catch {}
+  } catch (e) {
+    console.warn("mpBumpScore hata:", e);
+  }
+}
+
+function mpSend(ev) {
+  if (!db || !roomId) return;
+  try {
+    db.ref(`rooms/${roomId}/events`).push({
+      ...ev,
+      by: clientId,
+      t: Date.now()
+    });
+    // oda aktifliği
+    try { db.ref(`rooms/${roomId}/lastActive`).set(Date.now()); } catch {}
+  } catch (e) {
+    console.warn("mpSend hata:", e);
+  }
+}
+
+
+function mpListenState(room) {
+  if (!db) return;
+  if (stateRef) { try { stateRef.off(); } catch {} }
+  stateRef = db.ref(`rooms/${room}/state`);
+
+  stateRef.on("value", (snap) => {
+    const s = snap.val();
+    if (!s) return;
+
+    // tek kaynak: kalan haklar & skor
+    if (typeof s.shotsL === "number") state.shotsL = s.shotsL;
+    if (typeof s.shotsR === "number") state.shotsR = s.shotsR;
+    if (typeof s.scoreL === "number") state.scoreL = s.scoreL;
+    if (typeof s.scoreR === "number") state.scoreR = s.scoreR;
+
+    // bitiş senkronu (istersen ileride buradan da yönetiriz)
+    if (s.finished && !state.finished) {
+      state.finished = true;
+      state.winner = s.winner || null;
+      state.winT = 0;
+      spawnConfettiFinal();
+    }
+  });
+}
+
+async function mpInitRoomState(room) {
+  if (!db) return;
+  const ref = db.ref(`rooms/${room}/state`);
+  try {
+    const snap = await ref.once("value");
+    if (!snap.exists()) {
+      await ref.set({
+        shotsL: 25, shotsR: 25,
+        scoreL: 0,  scoreR: 0,
+        finished: false,
+        winner: null,
+        lastActive: Date.now()
+      });
+    }
+  } catch (e) {
+    console.warn("mpInitRoomState hata:", e);
+  }
+}
+
+async function mpDecShot(side) {
+  if (!db || !roomId) return;
+  try {
+    const ref = db.ref(`rooms/${roomId}/state`);
+    await ref.transaction((s) => {
+      s = s || {};
+      s.shotsL = s.shotsL ?? 25;
+      s.shotsR = s.shotsR ?? 25;
+      if (side === "L") s.shotsL = Math.max(0, s.shotsL - 1);
+      else s.shotsR = Math.max(0, s.shotsR - 1);
+      s.lastActive = Date.now();
+      return s;
+    });
+    try { db.ref(`rooms/${roomId}/lastActive`).set(Date.now()); } catch {}
+  } catch (e) {
+    console.warn("mpDecShot hata:", e);
+  }
+}
+
+
+async function mpResetRoomState(){
+  if (!db || !roomId) return;
+  const stateR = db.ref(`rooms/${roomId}/state`);
+  const eventsR = db.ref(`rooms/${roomId}/events`);
+  const now = Date.now();
+  // state'i baştan kur
+  await stateR.set({
+    shotsL: 25, shotsR: 25,
+    scoreL: 0,  scoreR: 0,
+    finished: false,
+    winner: null,
+    lastActive: now
+  });
+  // eski event'leri temizle (yeni katılanlarda "geçmişten mermi" olmasın)
+  try { await eventsR.remove(); } catch {}
+}
+
+
+async function enterRoom(code, host) {
+  if (!db) return null;
+  const room = safeRoomCode(code);
+  if (!room) return null;
+
+  // oda var mı? (yoksa host oluşturacak)
+  const roomRef = db.ref(`rooms/${room}`);
+  const roomSnap = await roomRef.once("value");
+  if (!roomSnap.exists()) {
+    if (!host) {
+      mpSetError("Oda bulunamadı.");
+      return null;
+    }
+    await roomRef.set({ createdAt: Date.now(), createdBy: clientId, lastActive: Date.now() });
+  }
+
+  // mevcut oyuncular
+  const playersRef = db.ref(`rooms/${room}/players`);
+  const playersSnap = await playersRef.once("value");
+  const players = playersSnap.val() || {};
+  const ids = Object.keys(players);
+
+  // Eğer zaten içerdeysek (refresh), aynı side ile devam
+  if (players[clientId] && players[clientId].side) {
+    return players[clientId].side;
+  }
+
+  if (ids.length >= 2) {
+    mpSetError("Oda dolu (maks 2 kişi).");
+    return null;
+  }
+
+  // side seçimi: host genelde Hasan (L), join genelde Betül (R).
+  const taken = new Set(ids.map(id => players[id]?.side).filter(Boolean));
+  let side = null;
+  if (host) {
+    side = taken.has("L") ? (taken.has("R") ? null : "R") : "L";
+  } else {
+    side = taken.has("R") ? (taken.has("L") ? null : "L") : "R";
+  }
+  if (!side) {
+    mpSetError("Oda dolu (maks 2 kişi).");
+    return null;
+  }
+
+  // yaz
+  const myRef = db.ref(`rooms/${room}/players/${clientId}`);
+  await myRef.set({ side, joinedAt: Date.now() });
+
+  // disconnectte temizle
+  try { myRef.onDisconnect().remove(); } catch {}
+
+  return side;
+}
+
+async function createRoom() {
+  if (!db) return;
+  const code = safeRoomCode(roomInput.value) || (Math.random().toString(36).slice(2, 7).toUpperCase());
+  mpSetError(null);
+  const side = await enterRoom(code, true);
+  if (!side) return;
+
+  roomId = safeRoomCode(code);
+  isHost = true;
+  mySide = side;
+
+  await mpInitRoomState(roomId);
+  mpListenState(roomId);
+  mpListenEvents(roomId);
+  mpListenPlayers(roomId);
+  mpUiUpdate(1);
+}
+
+async function joinRoom() {
+  if (!db) return;
+  const code = safeRoomCode(roomInput.value);
+  if (!code) return;
+  mpSetError(null);
+
+  const side = await enterRoom(code, false);
+  if (!side) return;
+
+  roomId = code;
+  isHost = false;
+  mySide = side;
+
+  await mpInitRoomState(roomId);
+  mpListenState(roomId);
+  mpListenEvents(roomId);
+  mpListenPlayers(roomId);
+  // count UI will update via listener
+}
+
+function leaveRoom() {
+  // listeners
+  if (eventsRef) { try { eventsRef.off(); } catch {} }
+  if (playersUnsub) { try { playersUnsub.off(); } catch {} }
+  if (stateRef) { try { stateRef.off(); } catch {} }
+
+  // presence temizle
+  if (db && roomId) {
+    try { db.ref(`rooms/${roomId}/players/${clientId}`).remove(); } catch {}
+    // oda boşsa odayı da kaldır (best-effort)
+    try {
+      db.ref(`rooms/${roomId}/players`).once("value").then(s => {
+        const v = s.val() || {};
+        if (Object.keys(v).length === 0) {
+          db.ref(`rooms/${roomId}`).remove();
+        }
+      });
+    } catch {}
+  }
+
+  roomId = null;
+  isHost = false;
+  mySide = null;
+  mpSetError(null);
+  mpUiUpdate();
+}
+
+createRoomBtn.addEventListener("click", () => createRoom());
+joinRoomBtn.addEventListener("click", () => joinRoom());
+leaveRoomBtn.addEventListener("click", () => leaveRoom());
+
+// --- Online'da herkes kendi karakterine tıklasın ---
+// - Online modda: Hasan (L) sadece Hasan, Betül (R) sadece Betül atar.
+// - Aynı cihazda: ikisi de serbest (hotseat)
+async function doFire(side) {
+  if (state.finished) return;
+  if (typeof mobileBlocked !== "undefined" && mobileBlocked) return;
+  if (!audioUnlocked) await unlockAudio();
+
+  // online role kısıtı
+  if (roomId && mySide && side !== mySide) return;
+
+  const kind = rollHeartType().key;
+  playShoot(side, kind);
+
+  if (roomId) {
+    // haklar DB state'inden yönetilir
+    mpDecShot(side);
+    mpSend({ type:"fire", side, kind });
+    fire(side === "L", kind, {consumeShot:false, owner:true});
+  } else {
+    mpSend({ type:"fire", side, kind });
+    fire(side === "L", kind);
+  }
+}
+
+// Canvas tıklama
+canvas.addEventListener("pointerdown", async (e) => {
+  const r = canvas.getBoundingClientRect();
+  const mx = (e.clientX - r.left) * (W / r.width);
+  const my = (e.clientY - r.top) * (H / r.height);
+
+  if (isPointOnChar(mx,my,leftChar))  await doFire("L");
+  else if (isPointOnChar(mx,my,rightChar)) await doFire("R");
+});
+
+// Mobil büyük butonlar
+btnHasan.addEventListener("click", () => doFire("L"));
+btnBetul.addEventListener("click", () => doFire("R"));
+
+// Çizimler
+  function drawStick(ch, headCanvas, shakeT, isWinner=false) {
+    const shake = shakeT > 0 ? (Math.sin(state.time*50) * 6) : 0;
+
+    // kazanan zıplama
+    const winBounce = (isWinner && state.finished)
+      ? (Math.sin(state.winT*10) * 10) * Math.exp(-state.winT*0.15)
+      : 0;
+
+    const x = ch.x + shake;
+    const y = ch.y - winBounce;
+
+    // gölge
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(x, ch.y+28, 90, 18, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(232,238,252,0.95)";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+
+    ctx.beginPath();
+    ctx.moveTo(x, y+10); ctx.lineTo(x-35, y+70);
+    ctx.moveTo(x, y+10); ctx.lineTo(x+35, y+70);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x, y-120); ctx.lineTo(x, y+10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x, y-85); ctx.lineTo(x-55, y-45);
+    ctx.moveTo(x, y-85); ctx.lineTo(x+55, y-45);
+    ctx.stroke();
+
+    // kafa
+    const hx = x - 85;
+    const hy = (y - ch.bodyH + 30) - 85;
+    if (headCanvas) ctx.drawImage(headCanvas, hx, hy, 170, 170);
+    else {
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.beginPath();
+      ctx.arc(x, y - ch.bodyH + 30, ch.headR, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // kazananın etrafına dönen küçük kalpler
+    if (isWinner && state.finished && state.winner !== "T") {
+      const center = { cx: x, cy: y - ch.bodyH + 30 };
+      const ring = 88;
+      for (let i=0; i<40; i++){
+        const ang = state.winT*2.2 + i*(Math.PI*2/6);
+        const px = center.cx + Math.cos(ang)*ring;
+        const py = center.cy + Math.sin(ang)*ring*0.75;
+        drawHeart(px, py, 0.55, i%2===0 ? "gold":"normal", ang);
+      }
+    }
+
+    ctx.fillStyle = "rgba(232,238,252,0.9)";
+    ctx.font = "bold 16px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(ch.name, x, y+105);
+  }
+
+  function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
+  }
+
+  function drawScoreAndShots() {
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.lineWidth = 1;
+
+    const boxW = 420, boxH = 62;
+    const bx = (W-boxW)/2, by = 16;
+    roundRect(ctx, bx, by, boxW, boxH, 14, true, true);
+
+    ctx.fillStyle = "#e8eefc";
+    ctx.textAlign = "center";
+
+    ctx.font = "800 18px system-ui";
+    ctx.fillText(`${leftChar.name}  ${state.scoreL}  -  ${state.scoreR}  ${rightChar.name}`, W/2, by+28);
+
+    ctx.font = "700 13px system-ui";
+    ctx.fillText(`Kalan hak: ${state.shotsL} / 25   |   ${state.shotsR} / 25`, W/2, by+49);
+
+    ctx.restore();
+  }
+
+  // Loop
+  let last = performance.now();
+  function tick(now) {
+    const dt = Math.min(0.033, (now-last)/1000);
+    last = now;
+    state.time += dt;
+
+    state.cooldown = Math.max(0, state.cooldown - dt);
+    state.shakeL = Math.max(0, state.shakeL - dt);
+    state.shakeR = Math.max(0, state.shakeR - dt);
+    state.flash  = Math.max(0, state.flash - dt);
+    state.comboFlash = Math.max(0, state.comboFlash - dt);
+
+    if (state.finished) state.winT += dt;
+
+    // bullets
+    for (const b of state.bullets) {
+      if (!b.alive) continue;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.vy += 220 * dt;
+      b.rot += 1.8 * dt;
+
+      const target = b.fromLeft ? rightChar : leftChar;
+      const attackerIsLeft = b.fromLeft;
+
+      if (bulletHitsChar(b, target)) {
+        b.alive = false;
+        hitTarget(target === leftChar, b.x, b.y, b.kind, attackerIsLeft, !!b.owner);
+      }
+
+      if (b.x < -160 || b.x > W+160 || b.y < -260 || b.y > H+260) b.alive = false;
+    }
+    state.bullets = state.bullets.filter(b => b.alive);
+
+    // particles
+    for (const p of state.particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 380 * dt;
+      p.life -= dt;
+      p.vx *= (1 - 2.5*dt);
+    }
+    state.particles = state.particles.filter(p => p.life > 0);
+
+    // confetti
+    for (const c of state.confetti) {
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      c.vy += 520 * dt;
+      c.vx *= (1 - 0.8*dt);
+      c.rot += c.vr * dt;
+      c.life -= dt;
+    }
+    state.confetti = state.confetti.filter(c => c.life > 0);
+
+    // bitiş sonrası: yavaş yavaş kalp yağmuru
+    if (state.finished && Math.random() < 0.18) {
+      const x = 60 + Math.random()*(W-120);
+      const kind = (Math.random()<0.18) ? "gold" : "normal";
+      state.bullets.push({
+        x, y: -40,
+        vx: (Math.random()*80 - 40),
+        vy: 220 + Math.random()*140,
+        fromLeft: Math.random() < 0.5,
+        r: 12,
+        alive: true,
+        kind,
+        rot: Math.random()*Math.PI*2
+      });
+    }
+
+    maybeFinish();
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+
+    // ambient stars
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    for (let i=0;i<20;i++){
+      const x = (i*97 + (state.time*30)) % W;
+      const y = 60 + (i*23)%140;
+      ctx.beginPath(); ctx.arc(x,y, 2+(i%3), 0, Math.PI*2); ctx.fill();
+    }
+
+    // ground line
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(40, 410);
+    ctx.lineTo(W-40, 410);
+    ctx.stroke();
+
+    const leftIsWinner  = state.winner === "L";
+    const rightIsWinner = state.winner === "R";
+
+    drawStick(leftChar, headLeft, state.shakeL, leftIsWinner);
+    drawStick(rightChar, headRight, state.shakeR, rightIsWinner);
+
+    // bullets hearts
+    for (const b of state.bullets) drawHeart(b.x, b.y, 1.05, b.kind, b.rot);
+
+    // particles
+    for (const p of state.particles) {
+      const a = clamp(p.life/0.7, 0, 1);
+      const col = (p.kind === "gold") ? `rgba(255, 245, 210, ${a})` : `rgba(255, 190, 210, ${a})`;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 3.2, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // confetti pieces
+    for (const c of state.confetti) {
+      const a = clamp(c.life/1.4, 0, 1);
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rot);
+      ctx.globalAlpha = 0.65*a;
+      ctx.fillStyle = "rgba(255,255,255,1)";
+      ctx.fillRect(-c.s/2, -c.s/2, c.s, c.s*0.5);
+      ctx.restore();
+    }
+
+    drawScoreAndShots();
+
+    if (state.flash > 0) {
+      const a = state.flash / 0.10;
+      ctx.fillStyle = `rgba(255,255,255,${0.20*a})`;
+      ctx.fillRect(0,0,W,H);
+    }
+  }
+
+  couple.onload = () => {
+    const leftCrop  = HEAD_CROP[MAP.leftCharUses];
+    const rightCrop = HEAD_CROP[MAP.rightCharUses];
+    headLeft  = makeHeadImage(leftCrop);   // Hasan
+    headRight = makeHeadImage(rightCrop);  // Betül
+  };
+  couple.onerror = () => {
+    console.warn("couple.jpg bulunamadı / yüklenemedi. HTML ile aynı klasörde ve adı couple.jpg olmalı.");
+  };
+
+  // İlk açılışta firebase varsa hazırla
+  mpInit();
+  mpUiUpdate();
+
+  // Mobile orientation handling
+  updateOrientationUI();
+  window.addEventListener('resize', () => { updateOrientationUI(); }, {passive:true});
+  window.addEventListener('orientationchange', () => { setTimeout(updateOrientationUI, 150); }, {passive:true});
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', () => { updateOrientationUI(); }, {passive:true});
+
+  requestAnimationFrame(tick);
+})();
+</script>
+
+<!--
+ONLINE 2 TELEFON (en kolay yol):
+1) Firebase Console > Create Project
+2) Build > Realtime Database > Create database (test mode bile olur)
+3) Project settings > General > Your apps (Web) > Add app
+4) Çıkan firebaseConfig objesini al, yukarıdaki FIREBASE_CONFIG (örnek aşağıda) yerine yapıştır.
+
+Örnek:
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBPbQvcV1MXdM1Fiw3wwbGZhfCX5XvAOIY",
+    authDomain: "hasan-betul-game.firebaseapp.com",
+    databaseURL: "https://hasan-betul-game-default-rtdb.firebaseio.com",
+    projectId: "hasan-betul-game",
+    storageBucket: "hasan-betul-game.firebasestorage.app",
+    messagingSenderId: "201232806252",
+    appId: "1:201232806252:web:e4c7d1e229d00b64024349"
+  };
+
+Sonra siteye (Neocities, GitHub Pages vs.) couple.jpg ile birlikte yükle.
+Biriniz "Oda Aç" der, diğeriniz aynı kodla "Katıl" der. İkiniz de tıklayınca senkron oynar.
+-->
+</body>
+</html>
